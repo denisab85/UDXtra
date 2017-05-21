@@ -24,7 +24,12 @@ Func search_UD()
    If Not $settingSearchUD Then
 	  Return
    EndIF
-
+   If WinExists ("Unified Desktop") Then
+	  WinActivate ("Unified Desktop")
+	  ;WinWaitActive ("Unified Desktop")
+   Else
+	  Return
+   EndIf
    Local $aPos = MouseGetPos()
    Local $aType = ""
    Local $Location[1]
@@ -146,13 +151,13 @@ Func search_UD()
 EndFunc
 
 Func search_case()
-   If Not $settingChromeCase Then
+   Local $strProc="iexplore.exe"
+   If Not $settingChromeCase Or Not ProcessExists ($strProc) Then
 	  Return
-   EndIF
-   Local $proc="iexplore.exe"
+   EndIf
    Local $strComputer="."
    Local $oWMI=ObjGet("winmgmts:{impersonationLevel=impersonate}!\\" & $strComputer & "\root\cimv2")
-   Local $oProcessColl=$oWMI.ExecQuery("Select * from Win32_Process where Name= " & '"'& $Proc & '"')
+   Local $oProcessColl=$oWMI.ExecQuery("Select * from Win32_Process where Name= " & '"'& $strProc & '"')
    Local $Url = ""
    For $Process In $oProcessColl
 	  Local $Cmd=$Process.Commandline
@@ -168,7 +173,7 @@ EndFunc
 
 HotKeySet ("^!s", "search_UD")
 
-Opt("TrayMenuMode", 3)
+Opt("TrayMenuMode", 1)
 Local $iSettings = TrayCreateMenu("Settings") ; Create a tray menu sub menu with two sub items.
 Local $iSearchUD = TrayCreateItem("Search UD by 'Ctrl+Alt+S", $iSettings)
 TrayItemSetState($iSearchUD, $TRAY_CHECKED)
@@ -183,12 +188,18 @@ Local $idExit = TrayCreateItem("Exit")
 
 TraySetState($TRAY_ICONSTATE_SHOW) ; Show the tray menu.
 
+Local $hTimer = TimerInit() ; Begin the timer and store the handle in a variable.
+
 While 1
-   If $settingChromeCase Then
-	  search_case()
+   If TimerDiff($hTimer) > 500 Then
+	  $hTimer = TimerInit()
+	  If $settingChromeCase Then
+		 search_case()
+	  EndIf
    EndIf
-   ;Sleep (250)
-   Switch TrayGetMsg()
+;Sleep (250)
+   Local $tMsg = TrayGetMsg()
+   Switch $tMsg
       Case $idAbout ; Display a message box about UDXtra
          MsgBox($MB_SYSTEMMODAL, "", "UDXtra" & @CRLF & @CRLF & _
             "Version: 0.1" & @CRLF & _
