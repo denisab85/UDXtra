@@ -1,10 +1,12 @@
 #NoTrayIcon
 #include <Array.au3>
 #include <TrayConstants.au3> ; Required for the $TRAY_ICONSTATE_SHOW constant.
+#pragma compile(ProductVersion, 0.1)
 
 AutoItSetOption("MustDeclareVars", 1)
 Global $settingSearchUD = 1
 Global $settingChromeCase = 1
+Global $settingTruncateRf = 1
 
 Func get_token($aToken)
    $aToken = StringReplace ($aToken, " ", "")
@@ -148,7 +150,9 @@ Func search_UD()
 		 ExitLoop
 	  EndIf
    Next
+   ClipPut("")
 EndFunc
+
 
 Func search_case()
    Local $strProc="iexplore.exe"
@@ -171,14 +175,69 @@ Func search_case()
    EndIf
 EndFunc
 
+Func self_update()
+   SplashTextOn("HLC: Checking for HLC Update", "Please wait... This may take a few moments.", "400", "100", "-1", "-1", 50, "", "", "")
+   If Not IsDeclared("$complete_hlcfile_master_data_path") Then
+	  Global $complete_hlcfile_master_data_path = $site_master_data_path & "_HLC"
+	  If FileGetVersion($complete_hlcfile_master_data_path & "\hlc.exe") <> FileGetVersion("C:\hes\locationchange\hlc.exe") Then FileCopy($complete_hlcfile_master_data_path & "\hlc.exe", @ScriptFullPath & ".new") ;changed the name of the new file.
+	  Local $batchPath = @ScriptDir & '\hlc_update.bat'
+	  Local $batchFile =  "@echo off"& @CRLF _
+                            "ping localhost -n 2 > nul" & @CRLF _ ;not sure what you're doing here. Giving the script time to exit?
+                            ":loop" & @CRLF _ ;specify the start of a zone
+                            'del /Q "' & @ScriptFullPath & '"' & @CRLF _ ;the quotes are needed for long filepaths, and filepaths with spaces. The @SciptfullPath is for flexibility
+                            'if exist "' & @ScriptFullPath & '" goto loop' & @CRLF _ ;if the delete failed, try again
+                            'move "' & @ScriptFullPath & '.new" "' & @ScriptFullPath & '"' & @CRLF _ ;this is why I changed the new file's name.
+                            'start "' & @ScriptFullPath & '"' & @CRLF _
+                            'del /Q "' & $batchPath & '"' & @CRLF _
+                            "exit"
+	  FileWrite($batchPath,$batchFile)
+	  Run($batchPath, "", @SW_HIDE)
+	  SplashOff()
+	  Exit
+   Else
+	  SplashOff()
+   EndIf
+EndFunc
+
+Func get_min_max ($list)
+   Local $split = StringSplit($list, ",", 2)
+   Local $min = _ArrayMin($split)
+   Local $max = _ArrayMax($split)
+   Return ($min & "," & $max)
+EndFunc
+
+
+Func truncate_rf ($rf)
+   Local $aArray = StringRegExp($rf, '^(INET|STB) RX((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*)/TX((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*) (INET|STB) DSNR ((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*) USNR ((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*)', 1)
+   If Not @error Then
+	  Local $type = $aArray[0]
+	  Local $rx = $aArray[1]
+	  Local $tx = $aArray[6]
+	  Local $dsnr = $aArray[12]
+	  Local $usnr = $aArray[17]
+	  $rx = get_min_max ($rx)
+	  $tx = get_min_max ($tx)
+	  $dsnr = get_min_max ($dsnr)
+	  $usnr = get_min_max ($usnr)
+	  Local $result = $type & " " & $rx & "/" & $tx & " SNR " & $dsnr & "/" & $usnr
+	  ConsoleWrite ($result & @CR)
+	  ClipPut ($result)
+   EndIf
+EndFunc
+
+
 HotKeySet ("^!s", "search_UD")
 
 Opt("TrayMenuMode", 1)
 Local $iSettings = TrayCreateMenu("Settings") ; Create a tray menu sub menu with two sub items.
+
 Local $iSearchUD = TrayCreateItem("Search UD by 'Ctrl+Alt+S", $iSettings)
 TrayItemSetState($iSearchUD, $TRAY_CHECKED)
 Local $iChromeCase = TrayCreateItem("Open CaseMgmt in Chrome", $iSettings)
 TrayItemSetState($iChromeCase, $TRAY_CHECKED)
+Local $iTruncateRf = TrayCreateItem("Truncate RF in clipboard", $iSettings)
+TrayItemSetState($iTruncateRf, $TRAY_CHECKED)
+
 TrayCreateItem("") ; Create a separator line.
 
 Local $idAbout = TrayCreateItem("About")
@@ -193,11 +252,10 @@ Local $hTimer = TimerInit() ; Begin the timer and store the handle in a variable
 While 1
    If TimerDiff($hTimer) > 500 Then
 	  $hTimer = TimerInit()
-	  If $settingChromeCase Then
-		 search_case()
+	  If $settingChromeCase Then search_case()
+	  If $settingTruncateRf Then truncate_rf (ClipGet())
 	  EndIf
-   EndIf
-;Sleep (250)
+
    Local $tMsg = TrayGetMsg()
    Switch $tMsg
       Case $idAbout ; Display a message box about UDXtra
@@ -218,6 +276,13 @@ While 1
 			TrayItemSetState($iChromeCase, $TRAY_CHECKED)
 		 Else
 			TrayItemSetState($iChromeCase, $TRAY_UNCHECKED)
+		 EndIf
+	  Case $iTruncateRf
+		 $settingTruncateRf = Not $settingTruncateRf
+		 If $settingTruncateRf Then
+			TrayItemSetState($iTruncateRf, $TRAY_CHECKED)
+		 Else
+			TrayItemSetState($iTruncateRf, $TRAY_UNCHECKED)
 		 EndIf
       Case $idExit ; Exit
          Exit
