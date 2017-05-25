@@ -8,6 +8,7 @@ Global $settingSearchUD = 1
 Global $settingChromeCase = 1
 Global $settingTruncateRf = 1
 
+
 Func get_token($aToken)
    $aToken = StringReplace ($aToken, " ", "")
    $aToken = StringReplace ($aToken, "-", "")
@@ -21,6 +22,7 @@ Func get_token($aToken)
 	  Return ""
    EndIf
 EndFunc
+
 
 Func search_UD()
    If Not $settingSearchUD Then
@@ -175,6 +177,7 @@ Func search_case()
    EndIf
 EndFunc
 
+
 Func self_update()
    SplashTextOn("HLC: Checking for HLC Update", "Please wait... This may take a few moments.", "400", "100", "-1", "-1", 50, "", "", "")
    If Not IsDeclared("$complete_hlcfile_master_data_path") Then
@@ -199,16 +202,22 @@ Func self_update()
    EndIf
 EndFunc
 
+
 Func get_min_max ($list)
    Local $split = StringSplit($list, ",", 2)
-   Local $min = _ArrayMin($split)
-   Local $max = _ArrayMax($split)
-   Return ($min & "," & $max)
+   Local $min = _ArrayMin($split, 1)
+   Local $max = _ArrayMax($split, 1)
+   If ($min = $max) Then
+	  return $min
+   Else
+	  return ($min & "," & $max)
+   EndIf
 EndFunc
 
 
 Func truncate_rf ($rf)
-   Local $aArray = StringRegExp($rf, '^(INET|STB) RX((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*)/TX((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*) (INET|STB) DSNR ((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*) USNR ((\d{1,2}(\.\d{0,2})?)(,\d{1,2}(\.\d{0,2})?)*)', 1)
+   Local $regExp = '^(INET|ESTB|DP) RX((-?\d{1,2}(\.\d)?)(,-?\d{1,2}(\.\d)?)*)/TX((-?\d{1,2}(\.\d)?)(,-?\d{1,2}(\.\d)?)*) (INET|ESTB|DP) DSNR ((-?\d{1,2}(\.\d)?)(,-?\d{1,2}(\.\d)?)*) USNR ((-?\d{1,2}(\.\d)?)(,-?\d{1,2}(\.\d)?)*)'
+   Local $aArray = StringRegExp($rf, $regExp, 1)
    If Not @error Then
 	  Local $type = $aArray[0]
 	  Local $rx = $aArray[1]
