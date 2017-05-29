@@ -34,7 +34,8 @@ Func search_UD()
    Else
 	  Return
    EndIf
-   Local $aPos = MouseGetPos()
+
+   ;Local $aMousePos = MouseGetPos()
    Local $aType = ""
    Local $Location[1]
    _ArrayPop ($Location)
@@ -65,7 +66,14 @@ Func search_UD()
 			Return
 		 EndIf
    EndIf
-   MouseClick ("main", 655, 79, 1, 1)
+   Local $winPos = WinGetPos("Unified Desktop")
+   Local $winLeft = $winPos[0]
+   Local $winTop = $winPos[1]
+   Local $winWidth = $winPos[2]
+
+   Local $x = ($winWidth - 220) / 2 + $winLeft + 44
+   Local $y = $winTop + 90
+   MouseClick ("main", $x, $y, 1, 1)
    Sleep(100)
    If $aType = "Account Number" Then
 	  Local $aPrefix = Int (StringLeft ($aToken, 3))
@@ -129,10 +137,8 @@ Func search_UD()
    Next
 
    For $loc In $Location
-	  If StringLen($loc) = 0 Then
-		 Break
-	  EndIf
-	  MouseClick ("main", 115, 115, 2, 1)
+	  If StringLen($loc) = 0 Then Break
+	  MouseClick ("main", $winLeft+120, $winTop+120, 2, 1)
 	  Sleep($delay)
 	  Send ($loc)
 	  Sleep($delay)
@@ -169,12 +175,10 @@ Func search_case()
 	  Local $Cmd=$Process.Commandline
 	  If StringLeft ($Cmd, 148) = '"C:\Program Files\Internet Explorer\iexplore.exe" -noframemerging https://shawprod.service-now.com/sn_customerservice_redirect.do?sysparm_accountid=' Then
 		 $Url = StringSplit ($Cmd, "noframemerging ", 3)[1]
+		 If StringLen ($Url) Then ShellExecute ("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", $Url)
 		 $Process.Terminate()
 	  EndIf
    Next
-   If StringLen ($Url) Then
-	  ShellExecute ("C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", $Url)
-   EndIf
 EndFunc
 
 
