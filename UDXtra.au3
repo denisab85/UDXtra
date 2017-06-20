@@ -371,13 +371,47 @@ While 1
 	  If $settingTruncateRf Then truncate_rf (ClipGet())
    EndIf
 
+   Local $help = "UDXtra - Extra features for Unified Desktop:" & @CR & _
+"" & @CR & _
+"1. Search for an account/phone number in UD. To run a search," & @CR & _
+"   - copy the number to the clipboard (Ctrl+C) or select/put mouse cursor on it " & @CR & _
+"     in the UD ScratchPad" & @CR & _
+"   - press 'Ctrl+Alt+S' on the keyboard" & @CR & _
+"   - try not to move the mouse and/or press any keys while search is running." & @CR & _
+"     If you need to stop the search, press and hold 'Esc' on the keyboard." & @CR & _
+"   - the search will stop automatically when an account is found." & @CR & _
+"" & @CR & _
+"2. Open ServiceNow case management tickets in Google Chrome" & @CR & _
+"   - automatically checks for open tickets and re-opens them in Chrome" & @CR & _
+"   - simultaneously with opening the ticket in Chrome, the program will attempt " & @CR & _
+"     to copy the current Calabrio call ID to the ScratchPad" & @CR & _
+"   - sometimes Chrome would say 'Account not found: 000-0000-0000'. To bypass this," & @CR & _
+"     press and hold 'Alt' and try to open the ticket again. Hold 'Alt'" & @CR & _
+"     until ServiceNow loads in InternetExplorer. On releasing 'Alt' a Chrome page" & @CR & _
+"     for this account will open." & @CR & _
+"" & @CR & _
+"3. Truncate RF levels copied to clipboard" & @CR & _
+"   - any text containing RF levels from UD tabs (Phone, Internet and Cable tabs)" & @CR & _
+"     or from RSC Tools window gets converted to a simple form by selecting " & @CR & _
+"     minimum and maximum values for each set of numbers. Use this for SC, WO and" & @CR & _
+"     trouble ticketing." & @CR & @CR & _
+"! To disable any of the listed options, click on the program menu and uncheck" & @CR & _
+"  corresponding item under 'Settings'." & @CR & @CR & _
+"" & @CR & _
+" (c) Denis Abakumov [W2G0], 2017"
    Local $tMsg = TrayGetMsg()
    Switch $tMsg
       Case $idAbout ; Display a message box about UDXtra
-         MsgBox($MB_SYSTEMMODAL, "About UDXtra", "UDXtra" & @CRLF & @CRLF & _
-            "Version: 0.1" & @CRLF & _
-			"Extra features for Unified Desktop" & @CRLF & _
-			"(c) Denis Abakumov.")
+         ;MsgBox($MB_SYSTEMMODAL, "About UDXtra", "UDXtra" & @CRLF & @CRLF & _
+         ;   "Version: 0.1" & @CRLF & _
+		;	"Extra features for Unified Desktop" & @CRLF & _
+		;	"(c) Denis Abakumov")
+		 Run("notepad.exe")
+		 WinWait("Untitled - Notepad")
+		 WinActivate("Untitled - Notepad")
+		 AutoItSetOption ("SendKeyDelay", 0)
+		 Send($help, 1)
+		 AutoItSetOption ("SendKeyDelay", 5)
 	  Case $iSearchUD
 		 $settingSearchUD = Not $settingSearchUD
 		 If $settingSearchUD Then
